@@ -57,7 +57,7 @@ void AFlowerPawn::Tick(float DeltaTime)
 
 	/// movement
 	FVector MovePosition = GetActorLocation() + MoveSpeed * MovementDirection * DeltaTime;
-	SetActorLocation(MovePosition, false);
+	SetActorLocation(MovePosition, true);
 
 	/// marginal stat updates
 	if (bIsSustained)
@@ -68,7 +68,6 @@ void AFlowerPawn::Tick(float DeltaTime)
 	{
 		LifeForce -= DeltaTime;
 	}
-	
 }
 
 void AFlowerPawn::ResetParams()

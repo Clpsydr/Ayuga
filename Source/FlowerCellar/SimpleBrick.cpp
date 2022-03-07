@@ -30,10 +30,6 @@ void ASimpleBrick::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FVector MovePosition = GetActorLocation() + FallingSpeed * FVector(-1.f, 0.f, 0.f) * DeltaTime;
-	if (bIsEdible && Damage > 0)
-	{
-		// silly sine function was killed there
-	}
 
 	SetActorLocation(MovePosition, true);
 

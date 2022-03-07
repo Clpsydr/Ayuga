@@ -1,5 +1,6 @@
 #include "BrickGenerator.h"
 #include "SimpleBrick.h"
+#include "FlyingBrick.h"
 #include "Sunray.h"
 #include "SpawningSystem.h"
 
@@ -30,7 +31,13 @@ ABrickGenerator::ABrickGenerator()
 void ABrickGenerator::BeginPlay()
 {
 	Super::BeginPlay();
-	GLog->Log(ELogVerbosity::Warning, *FString::Printf(TEXT("BrickSet contains %d elements"), BrickSet.Num()));
+
+	//populating pool of possible to use points
+	for (int i = 0; i < PatternSize * PatternSize; i++)
+	{
+		PossiblePoints.Add(FVector2D(i / PatternSize, i % PatternSize));
+		GLog->Log(ELogVerbosity::Warning, *FString::Printf(TEXT("%d %d"), i / PatternSize, i % PatternSize));
+	}
 }
 
 void ABrickGenerator::EnableGenerator()
@@ -61,42 +68,25 @@ void ABrickGenerator::GenerateWave()
 	
 	//Selecting unique spawn points, more with higher difficulty
 	int TargetAmountOfSpawns = 8 + Difficulty;
-	TArray<FVector2D> SpawnPoints;
-	//dont do this at home, kids
-	for (int i = 0; i < TargetAmountOfSpawns; i++)
+	TArray<FVector2D> SpawnPoints = PossiblePoints;
+
+	// Allegedly slightly less retarded method compared to the previous one.
+	// removing extraneous points from pool, leaving only required amount
+	if (PatternSize * PatternSize - TargetAmountOfSpawns > 0)
 	{
-		float a = FMath::RandRange(0, PatternSize-1);
-		float b = FMath::RandRange(0, PatternSize-1);
-		FVector2D NewVector = FVector2D(a,b);
-		if (SpawnPoints.Find(NewVector) == INDEX_NONE)
+		for (int i = 0; i < (PatternSize * PatternSize - TargetAmountOfSpawns); i++)
 		{
-			SpawnPoints.Add(NewVector);
-		}
-		else
-		{
-			i--;
+			SpawnPoints.RemoveAt(FMath::RandRange(0, SpawnPoints.Num()-1));
 		}
 	}
-
-	//copy array of all points, exempt any few random points out of it instead??
-	/*TArray<FVector2D> PossiblePoints;
-
-	for (int i = 0; i < TargetAmountOfSpawns; i++)
-	{
-		FVector2D NewPoints = TargetAmountOfSpawns
-		SpawnPoints.Add(TargetAmountOfSpawns)
-		// first populate the vector , then pull it out
-		// or event better populate it with just 0 1 2 3 4 so on, thats enough
-	}*/
-
-
-
+	
+	// Setting spawn of generic bricks
 	for (FVector2D SpawnPoint : SpawnPoints)
 	{
 		SpawnBlock(FVector(GetActorLocation().X, 
 							GetActorLocation().Y - 300 * PatternSize + 600 * SpawnPoint.X + 250, 
 							GetActorLocation().Z - 300 * PatternSize + 600 * SpawnPoint.Y + 250), 
-					FMath::FRandRange(0, 45) / 15);		// make proper division??
+					FMath::FRandRange(0, 45) / 15);		// TODO: Needs proper division
 		
 	}
 }
@@ -187,19 +177,44 @@ void ABrickGenerator::SpawnBlock(FVector NewPos, int32 BlockIndex)
 	{
 		USpawningSystem* Pool = GetWorld()->GetSubsystem<USpawningSystem>();
 		FTransform SpawnTransform(GetActorRotation(), NewPos, FVector::OneVector);
-		ASimpleBrick* NewBrick = Cast<ASimpleBrick>(Pool->RetrieveActor(BrickSet[BlockIndex], SpawnTransform));
 
-		if (NewBrick)
+		//ugly case for processing extended classes
+		if (BlockIndex < 2)
 		{
-			NewBrick->Enable();
+			ASimpleBrick* NewBrick = Cast<ASimpleBrick>(Pool->RetrieveActor(BrickSet[BlockIndex], SpawnTransform));
 
-			//acceleration process
-			if (NewBrick->GetActorLocation().Y < 1100.f && NewBrick->GetActorLocation().Z < 1100.f &&
-				NewBrick->GetActorLocation().Y > 300.f && NewBrick->GetActorLocation().Z > 300.f)
+			if (NewBrick)
 			{
-				if (FMath::RandRange(0.f, 15.f) < 9.f)
+				NewBrick->Enable();
+
+				//acceleration process
+				if (NewBrick->GetActorLocation().Y < 1100.f && NewBrick->GetActorLocation().Z < 1100.f &&
+					NewBrick->GetActorLocation().Y > 300.f && NewBrick->GetActorLocation().Z > 300.f)
 				{
-					NewBrick->Accelerate();
+					if (FMath::RandRange(0.f, 15.f) < 9.f)
+					{
+						NewBrick->Accelerate();
+					}
+				}
+			}
+
+		}
+		else
+		{
+			AFlyingBrick* NewBrick = Cast<AFlyingBrick>(Pool->RetrieveActor(BrickSet[BlockIndex], SpawnTransform));
+
+			if (NewBrick)
+			{
+				NewBrick->Enable();
+
+				//acceleration process
+				if (NewBrick->GetActorLocation().Y < 1100.f && NewBrick->GetActorLocation().Z < 1100.f &&
+					NewBrick->GetActorLocation().Y > 300.f && NewBrick->GetActorLocation().Z > 300.f)
+				{
+					if (FMath::RandRange(0.f, 15.f) < 9.f)
+					{
+						NewBrick->Accelerate();
+					}
 				}
 			}
 		}
@@ -215,6 +230,7 @@ void ABrickGenerator::IncreaseDifficulty(int ExtraDiff)
 
 void ABrickGenerator::PurgeEntities()
 {
+	//requires disabling actors as well, which means a) letting pool know about them or b) halting delegates on disable
 	/*USpawningSystem* Pool = GetWorld()->GetSubsystem<USpawningSystem>();
 	Pool->PurgeActiveActors();*/
 }

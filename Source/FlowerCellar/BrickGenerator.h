@@ -55,6 +55,9 @@ private:
 
 	int Difficulty = 0;
 
+	UPROPERTY()
+	TArray<FVector2D> PossiblePoints;				//relative positions of all spawnpoints
+
 protected:
 	virtual void BeginPlay() override;
 

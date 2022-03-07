@@ -1,5 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/*
+* Planned to be the spawned element, that manages bricks within itself
+*/
 #pragma once
 
 #include "CoreMinimal.h"

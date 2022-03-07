@@ -51,7 +51,6 @@ void USpawningSystem::PurgeActiveActors()
 {
 	for (auto* Actr : ActorArray)
 	{
-		
 		ReturnActor(Actr);
 	}
 }
