@@ -34,4 +34,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params");
 		float FlyVelocty = 1000.f;
 
+	UFUNCTION()
+		void TurnAround();
+
 };

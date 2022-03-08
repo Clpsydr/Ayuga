@@ -1,21 +1,22 @@
 #include "FlyingBrick.h"
 #include "FlowerPawn.h"
-#include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 AFlyingBrick::AFlyingBrick()
 {
-	if (Cast<UBoxComponent>(GetComponentByClass(UBoxComponent::StaticClass())))
+	if (Cast<UStaticMeshComponent>(GetComponentByClass(UStaticMeshComponent::StaticClass())))
 	{
-		Cast<UBoxComponent>(GetComponentByClass(UBoxComponent::StaticClass()))->OnComponentHit.AddDynamic(this, &ThisClass::OnComponentHit);
+		Cast<UStaticMeshComponent>(GetComponentByClass(UStaticMeshComponent::StaticClass()))->OnComponentHit.AddDynamic(this, &ThisClass::OnComponentHit);
 	}
 }
 
 void AFlyingBrick::OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	AFlowerPawn* PresumedPlayer = Cast<AFlowerPawn>(OtherActor);
+
+AFlowerPawn* PresumedPlayer = Cast<AFlowerPawn>(OtherActor);
 	if (!PresumedPlayer)
 	{
-		FlyDirection *= -1;
+		TurnAround();
 	}
 }
 
@@ -24,15 +25,21 @@ void AFlyingBrick::OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 void AFlyingBrick::BeginPlay()
 {
 	Super::BeginPlay();
+	FRotator NewRot;
 
 	if (FMath::RandRange(0, 1) > 0)
 	{
-		FlyDirection = FVector(0.f, 1.f, 0.f);
+		NewRot = FRotator(0, 90, 0);
+		FlyDirection = FVector::RightVector;
 	}
 	else
 	{
-		FlyDirection = FVector(0.f, 0.f, 1.f);
+		NewRot = FRotator(0, 0, 90);
+		FlyDirection = FVector::UpVector;
 	}
+
+	FQuat QuatRot = FQuat(NewRot);
+	AddActorWorldRotation(QuatRot, false, 0, ETeleportType::None);
 }
 
 void AFlyingBrick::Tick(float DeltaTime)
@@ -40,4 +47,13 @@ void AFlyingBrick::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	FVector MovePosition = GetActorLocation() + FlyVelocty * FlyDirection * DeltaTime;
 	SetActorLocation(MovePosition, true);
+}
+
+void AFlyingBrick::TurnAround()
+{
+	FRotator NewRot = FRotator(180, 0, 0);
+	FQuat QuatRot = FQuat(NewRot);
+	AddActorWorldRotation(QuatRot, false, 0, ETeleportType::None);
+
+	FlyDirection *= -1;
 }
