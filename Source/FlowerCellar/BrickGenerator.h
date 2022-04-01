@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/UserDefinedStruct.h"
+#include "ObstaclePattern.h"
 #include "BrickGenerator.generated.h"
 
 class ASunray;
@@ -49,11 +50,13 @@ public:
 	ABrickGenerator();
 
 private:	
-	//TMultiMap<int32, FBreadSlice> BreadLibrary;	//difficulty and slices
+	TMultiMap<int32, FBrickPattern*> PatternLib;	//difficulty and slices
 
-	//TArray<FBreadSlice> CurrentLibrary;			//temp pylon for searching through certain difficulty
+	TArray<FBrickPattern*> CurrentDiffLib;		//temp pylon for searching through certain difficulty
 
 	int Difficulty = 0;
+
+	float InitialBrickVelocity = 0.f;
 
 	UPROPERTY()
 	TArray<FVector2D> PossiblePoints;				//relative positions of all spawnpoints
@@ -69,24 +72,29 @@ protected:
 
 	void ChangeInterval(float DeltaTime);
 
+	// datatable plug
+	UPROPERTY(EditAnywhere)
+		UDataTable* BrickPatternSource;
+
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	void EnableGenerator();
+	void EnableGenerator(float InitialVelocity);
 
 	void DisableGenerator();
 
 	void SpawnBlock(FVector NewPos, int32 BlockIndex);
 
 	void IncreaseDifficulty(int ExtraDiff);
+
+	void CollectPatterns();
+
+	void AttachNewDifficultySet(int NewDifficulty);
 	
 	void PurgeEntities();
 
 	UFUNCTION()
 		void LaunchMilestoneAnnouncement(int32 NewText);
-
-//	UFUNCTION()
-//		void SpawnBrick(TSubclassOf BrickClass, FVector TargetLocation);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Spawn Elements")
 		TArray<TSubclassOf<ASimpleBrick>> BrickSet;
@@ -124,11 +132,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Spawn properties")
 		float SunrayInterval = 3.f;
 
-	// links to various spawned elements
-		// assemble to an array
-		// get patterns as 2d matrix of int
-		// spawn i-th pawn in order
 	
+
 	FTimerHandle OneRowTimerHandle;
 	FTimerHandle WaterTimerHandle;
 	FTimerHandle SunrayTimerHandle;

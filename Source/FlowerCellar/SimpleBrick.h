@@ -14,6 +14,11 @@ class FLOWERCELLAR_API ASimpleBrick : public AActor
 public:	
 	ASimpleBrick();
 
+private:
+	float FallingSpeed = 800.f;
+
+	bool bIsSpinning = false;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -33,9 +38,6 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params")
-		float FallingSpeed = 800.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params")
 		int Hardness = 1;
@@ -60,4 +62,7 @@ public:
 
 	UFUNCTION()
 		void Disable();
+
+	UFUNCTION()
+		void SetNewVelocity(float NewVelocity);
 };

@@ -77,7 +77,10 @@ public:
 		float TotalDistance = 800.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay Balance")
-		float MilestoneThreshold = 10.f;
+		float MilestoneThreshold = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay Balance")
+		float InitialVelocity = 800.f;
 
 protected:
 	virtual void BeginPlay() override;

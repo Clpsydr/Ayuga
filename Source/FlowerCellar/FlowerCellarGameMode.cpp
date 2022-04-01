@@ -78,7 +78,7 @@ void AFlowerCellarGameMode::StartSystems()
 	if (BrickSource)
 	{
 		BrickSource->PurgeEntities();
-		BrickSource->EnableGenerator();
+		BrickSource->EnableGenerator(InitialVelocity);
 	}
 }
 

@@ -6,88 +6,112 @@
 
 ABrickGenerator::ABrickGenerator()
 {
-	#define none EBlockType::None
-	#define blck EBlockType::NormalBlock
-	#define soft EBlockType::SoftBlock
-	#define watr EBlockType::WaterDrop
-	#define flyy EBlockType::FlyBlock
-	#define rayl EBlockType::Sunray
-
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.TickInterval = 0.005f;
-
-	// invalidted TMap with difficulty as key
-	/*BreadLibrary.Add(0, FBreadSlice({
-	none,none,none,none,none,
-	none,none,none,none,none,
-	none,none,none,none,none,
-	none,none,none,none,none,
-	none,none,none,none,none,
-		}, -1, 0));ated until further development
-	//undocumen
-	*/
 }
 
 void ABrickGenerator::BeginPlay()
 {
 	Super::BeginPlay();
-
 	//populating pool of possible to use points
 	for (int i = 0; i < PatternSize * PatternSize; i++)
 	{
 		PossiblePoints.Add(FVector2D(i / PatternSize, i % PatternSize));
 		GLog->Log(ELogVerbosity::Warning, *FString::Printf(TEXT("%d %d"), i / PatternSize, i % PatternSize));
 	}
+
+	CollectPatterns();
 }
 
-void ABrickGenerator::EnableGenerator()
+void ABrickGenerator::EnableGenerator(float InitialVelocity)
 {
 	//initial difficulty shift for accumulating templates
 	IncreaseDifficulty(0);
 	SetActorTickEnabled(true);
+
 	GetWorld()->GetTimerManager().SetTimer(OneRowTimerHandle, this, &ABrickGenerator::GenerateWave, WaveInterval, true);
 	GetWorld()->GetTimerManager().SetTimer(WaterTimerHandle, this, &ABrickGenerator::GenerateWaterDrop, WaterFirstInterval, false);
 	GetWorld()->GetTimerManager().SetTimer(SunrayTimerHandle, this, &ABrickGenerator::GenerateSunRay, SunrayFirstInterval, false);
+
+	InitialBrickVelocity = InitialVelocity;
 }
 
 void ABrickGenerator::DisableGenerator()
 {
 	SetActorTickEnabled(false);
 	Difficulty = 0;
+	CurrentDiffLib.Empty();
+
 	GetWorld()->GetTimerManager().ClearTimer(OneRowTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(WaterTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(SunrayTimerHandle);
-	//CurrentLibrary.Empty();
 }
 
+
+// Wave is generated from existing datatable, if it was parsed properly.
+// Otherwise wave is constructed randomly
 void ABrickGenerator::GenerateWave()
 {
-	//get from roster random line, if its 1, remove it from library
-	//iterate through list of enums to spawn corresponding item in corresponding place.
-	//FBreadSlice ChosenSlice = CurrentLibrary[FMath::RandRange(0, CurrentLibrary.Num()-1)];
-	
-	//Selecting unique spawn points, more with higher difficulty
-	int TargetAmountOfSpawns = 8 + Difficulty;
-	TArray<FVector2D> SpawnPoints = PossiblePoints;
-
-	// Allegedly slightly less retarded method compared to the previous one.
-	// removing extraneous points from pool, leaving only required amount
-	if (PatternSize * PatternSize - TargetAmountOfSpawns > 0)
+	if (CurrentDiffLib.Num() > 0)
 	{
-		for (int i = 0; i < (PatternSize * PatternSize - TargetAmountOfSpawns); i++)
+		TArray<int32> ParsedSet;
+		if (CurrentDiffLib.Num() > 0)
 		{
-			SpawnPoints.RemoveAt(FMath::RandRange(0, SpawnPoints.Num()-1));
+			FString Example = CurrentDiffLib[FMath::RandRange(0,CurrentDiffLib.Num()-1)]->Pattern;
+			for (const wchar_t Elem : Example)
+			{
+				ParsedSet.Add(_ttoi(&Elem));
+			}
+
+			//if datatable doesnt have enough values, rest is filled with zeroes
+			for (int i = Example.Len(); i <= PatternSize * PatternSize; i++)
+			{
+				ParsedSet.Add(0);
+			}
+		}
+
+		for (FVector2D SpawnPoint : PossiblePoints)
+		{  
+			int32 BlockPos = SpawnPoint.X * PatternSize + SpawnPoint.Y + 1;		//recount position properly!!
+
+			if (ParsedSet[BlockPos-1] > 0)
+			{
+					SpawnBlock(FVector(GetActorLocation().X,
+						GetActorLocation().Y - 300 * PatternSize + 600 * SpawnPoint.Y + 250,
+						GetActorLocation().Z + 300 * PatternSize - 600 * SpawnPoint.X - 250),
+						ParsedSet[BlockPos-1] - 1);
+			}
 		}
 	}
-	
-	// Setting spawn of generic bricks
-	for (FVector2D SpawnPoint : SpawnPoints)
+	else
 	{
-		SpawnBlock(FVector(GetActorLocation().X, 
-							GetActorLocation().Y - 300 * PatternSize + 600 * SpawnPoint.X + 250, 
-							GetActorLocation().Z - 300 * PatternSize + 600 * SpawnPoint.Y + 250), 
-					FMath::FRandRange(0, 45) / 15);		// TODO: Needs proper division
-		
+		//get from roster random line, if its 1, remove it from library
+		//iterate through list of enums to spawn corresponding item in corresponding place.
+		//FBreadSlice ChosenSlice = CurrentLibrary[FMath::RandRange(0, CurrentLibrary.Num()-1)];
+
+		//Selecting unique spawn points, more with higher difficulty
+		int TargetAmountOfSpawns = 8 + Difficulty;
+		TArray<FVector2D> SpawnPoints = PossiblePoints;
+
+		// Allegedly slightly less retarded method compared to the previous one.
+		// removing extraneous points from pool, leaving only required amount
+		if (PatternSize * PatternSize - TargetAmountOfSpawns > 0)
+		{
+			for (int i = 0; i < (PatternSize * PatternSize - TargetAmountOfSpawns); i++)
+			{
+				SpawnPoints.RemoveAt(FMath::RandRange(0, SpawnPoints.Num() - 1));
+			}
+		}
+
+		// Setting spawn of generic bricks
+		for (FVector2D SpawnPoint : SpawnPoints)
+		{
+			SpawnBlock(FVector(GetActorLocation().X,
+				GetActorLocation().Y - 300 * PatternSize + 600 * SpawnPoint.X + 250,
+				GetActorLocation().Z - 300 * PatternSize + 600 * SpawnPoint.Y + 250),
+				FMath::FRandRange(0, 45) / 15);		// TODO: Needs proper division
+
+		}
 	}
 }
 
@@ -142,6 +166,7 @@ void ABrickGenerator::GenerateSunRay()
 		{
 			GLog->Log(ELogVerbosity::Warning, *FString::Printf(TEXT("sunray is spawned")));
 			NewBonus->Enable();
+			NewBonus->SetNewVelocity(InitialBrickVelocity);
 		}
 	}
 	
@@ -165,6 +190,7 @@ void ABrickGenerator::GenerateWaterDrop()
 		{
 			GLog->Log(ELogVerbosity::Warning, *FString::Printf(TEXT("droplet is spawned")));
 			Cast<ASimpleBrick>(NewBonus)->Enable();
+			Cast<ASimpleBrick>(NewBonus)->SetNewVelocity(InitialBrickVelocity);
 		}
 	}
 
@@ -186,6 +212,7 @@ void ABrickGenerator::SpawnBlock(FVector NewPos, int32 BlockIndex)
 			if (NewBrick)
 			{
 				NewBrick->Enable();
+				NewBrick->SetNewVelocity(InitialBrickVelocity);
 
 				//acceleration process
 				if (NewBrick->GetActorLocation().Y < 1100.f && NewBrick->GetActorLocation().Z < 1100.f &&
@@ -206,6 +233,7 @@ void ABrickGenerator::SpawnBlock(FVector NewPos, int32 BlockIndex)
 			if (NewBrick)
 			{
 				NewBrick->Enable();
+				NewBrick->SetNewVelocity(InitialBrickVelocity);
 
 				//acceleration process
 				if (NewBrick->GetActorLocation().Y < 1100.f && NewBrick->GetActorLocation().Z < 1100.f &&
@@ -221,11 +249,33 @@ void ABrickGenerator::SpawnBlock(FVector NewPos, int32 BlockIndex)
 	}
 }
 
+//Repopulating pattern set and sending a UI widget
 void ABrickGenerator::IncreaseDifficulty(int ExtraDiff)
 {
 	Difficulty += ExtraDiff;
 	LaunchMilestoneAnnouncement(Difficulty);
-	//for additive difficulty move all new difficulties to current library, if difficulty <= current
+	AttachNewDifficultySet(Difficulty);
+}
+
+//Onetime pattern agregation from datatable
+void ABrickGenerator::CollectPatterns()
+{
+	if (BrickPatternSource)
+	{
+		BrickPatternSource->GetRowNames();
+
+		for (FName TableRowName : BrickPatternSource->GetRowNames())
+		{
+			PatternLib.Add(BrickPatternSource->FindRow<FBrickPattern>(TableRowName, "")->Difficulty,
+				BrickPatternSource->FindRow<FBrickPattern>(TableRowName, ""));
+		}
+	}
+}
+
+void ABrickGenerator::AttachNewDifficultySet(int NewDifficulty)
+{
+	CurrentDiffLib.Empty();
+	PatternLib.MultiFind(NewDifficulty, CurrentDiffLib);
 }
 
 void ABrickGenerator::PurgeEntities()

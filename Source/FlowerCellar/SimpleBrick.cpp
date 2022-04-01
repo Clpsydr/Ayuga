@@ -33,7 +33,8 @@ void ASimpleBrick::Tick(float DeltaTime)
 
 	SetActorLocation(MovePosition, true);
 
-	if (FallingSpeed > 3000.f)
+	// very dumb, change this
+	if (bIsSpinning)
 	{
 		BodyMesh->SetWorldRotation(FMath::RInterpConstantTo(BodyMesh->GetComponentRotation(),
 			FRotator(BodyMesh->GetComponentRotation().Pitch + 2.f,
@@ -77,9 +78,15 @@ void ASimpleBrick::Disable()
 	}
 }
 
+void ASimpleBrick::SetNewVelocity(float NewVelocity)
+{
+	FallingSpeed = NewVelocity;
+}
+
 void ASimpleBrick::Accelerate()
 {
 	FallingSpeed += FMath::RandRange(1200.f, 1400.f);
+	bIsSpinning = true;
 }
 
 void ASimpleBrick::OnMeshOverlapBegin(class UPrimitiveComponent* OverlappedComp,
