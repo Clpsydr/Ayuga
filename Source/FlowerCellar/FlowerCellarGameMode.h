@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "ImageGallery.h"
 #include "FlowerCellarGameMode.generated.h"
 
 class ABrickGenerator;
@@ -84,4 +85,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+/// mobile stuff
+private:
+	class IPhotoLibrary* PhotoLibrary;
 };

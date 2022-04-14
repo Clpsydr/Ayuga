@@ -46,6 +46,9 @@ public:
 		int Damage = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params")
+		float BonusAcceleration = 1400.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params")
 		bool bIsEdible;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Params")

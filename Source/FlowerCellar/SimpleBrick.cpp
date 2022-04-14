@@ -59,6 +59,7 @@ void ASimpleBrick::Enable()
 	PrimaryActorTick.SetTickFunctionEnable(true);
 	BodyMesh->SetHiddenInGame(false);
 	HitBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	bIsSpinning = false;
 }
 
 void ASimpleBrick::Disable()
@@ -85,7 +86,7 @@ void ASimpleBrick::SetNewVelocity(float NewVelocity)
 
 void ASimpleBrick::Accelerate()
 {
-	FallingSpeed += FMath::RandRange(1200.f, 1400.f);
+	FallingSpeed += BonusAcceleration;
 	bIsSpinning = true;
 }
 

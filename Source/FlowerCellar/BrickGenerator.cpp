@@ -2,6 +2,7 @@
 #include "SimpleBrick.h"
 #include "FlyingBrick.h"
 #include "Sunray.h"
+#include "Misc/Char.h"
 #include "SpawningSystem.h"
 
 ABrickGenerator::ABrickGenerator()
@@ -58,9 +59,10 @@ void ABrickGenerator::GenerateWave()
 		if (CurrentDiffLib.Num() > 0)
 		{
 			FString Example = CurrentDiffLib[FMath::RandRange(0,CurrentDiffLib.Num()-1)]->Pattern;
-			for (const wchar_t Elem : Example)
+			for (const char Elem : Example)
 			{
-				ParsedSet.Add(_ttoi(&Elem));
+				//ConvertCharDigitToInt(Elem);
+				ParsedSet.Add(atoi(&Elem));
 			}
 
 			//if datatable doesnt have enough values, rest is filled with zeroes

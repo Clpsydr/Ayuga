@@ -30,6 +30,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+private:
+	class IImageGallery* PhotoLibrary;
+	
+
 public:
 	virtual void Tick(float DeltaTime) override;
 
@@ -41,6 +45,21 @@ public:
 
 	UFUNCTION(BlueprintPure)
 		UUserWidget* GetCurrentWidget() const;
+
+
+	/**PLATFORM DEPENDANT GALLERY MODE **/
+
+	UFUNCTION(BlueprintCallable)
+		void OpenGallery();
+
+	UFUNCTION()
+		void OnPhotoSelected(TArray<uint8> PhotoBytes);
+
+	UFUNCTION()
+		UTexture2D* LoadImageFromBytes(const TArray<uint8>& ImageBytes);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void BP_OnPhotoSelected(class UTexture2D* SelectedPhoto);
 
 protected:
 	UFUNCTION()
